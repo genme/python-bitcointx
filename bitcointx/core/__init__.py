@@ -11,7 +11,7 @@
 # LICENSE file.
 
 # pylama:ignore=E501
-
+import sys
 import threading
 import binascii
 import struct
@@ -37,9 +37,16 @@ _thread_local = threading.local()
 _thread_local.mutable_context_enabled = False
 
 
-class CoreCoinClassDispatcher(ClassMappingDispatcher, identity='core',
-                              depends=[script.ScriptCoinClassDispatcher]):
+if sys.version_info >= (3, 6):
+    class_args = dict(
+        identity='core',
+        depends=[script.ScriptCoinClassDispatcher]
+    )
+else:
+    class_args = dict()
 
+
+class CoreCoinClassDispatcher(ClassMappingDispatcher, **class_args):
     def __init_subclass__(mcs, **kwargs):
         return super().__init_subclass__(**kwargs)
 
@@ -96,6 +103,13 @@ class CoreCoinClassDispatcher(ClassMappingDispatcher, identity='core',
         return super().__getattribute__(name)
 
 
+if sys.version_info < (3, 6):
+    CoreCoinClassDispatcher.init_subclass(
+        identity='core',
+        depends=[script.ScriptCoinClassDispatcher]
+    )
+
+
 class CoreCoinClass(ImmutableSerializable, metaclass=CoreCoinClassDispatcher):
 
     def to_mutable(self):
@@ -132,10 +146,18 @@ class CoreCoinClass(ImmutableSerializable, metaclass=CoreCoinClassDispatcher):
         return cls.clone_from_instance(other_inst)
 
 
-class CoreBitcoinClassDispatcher(
-    CoreCoinClassDispatcher, depends=[script.ScriptBitcoinClassDispatcher]
-):
-    ...
+if sys.version_info >= (3, 6):
+    class CoreBitcoinClassDispatcher(
+        CoreCoinClassDispatcher, depends=[script.ScriptBitcoinClassDispatcher]
+    ):
+        ...
+else:
+    class CoreBitcoinClassDispatcher(CoreCoinClassDispatcher):
+        ...
+
+    CoreBitcoinClassDispatcher.init_subclass(
+        depends=[script.ScriptBitcoinClassDispatcher]
+    )
 
 
 class CoreBitcoinClass(CoreCoinClass, metaclass=CoreBitcoinClassDispatcher):

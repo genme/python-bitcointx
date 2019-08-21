@@ -17,7 +17,7 @@ scriptPubKeys; currently there is no actual wallet support implemented.
 """
 
 # pylama:ignore=E501,E221
-
+import sys
 from io import BytesIO
 
 import bitcointx
@@ -36,16 +36,33 @@ from bitcointx.core.script import (
 )
 
 
-class WalletCoinClassDispatcher(ClassMappingDispatcher, identity='wallet',
-                                depends=[bitcointx.core.CoreCoinClassDispatcher]):
-    ...
+if sys.version_info >= (3, 6):
+    class WalletCoinClassDispatcher(
+        ClassMappingDispatcher, identity='wallet',
+        depends=[bitcointx.core.CoreCoinClassDispatcher]
+    ):
+        ...
 
 
-class WalletBitcoinClassDispatcher(
-    WalletCoinClassDispatcher,
-    depends=[bitcointx.core.CoreBitcoinClassDispatcher]
-):
-    ...
+    class WalletBitcoinClassDispatcher(
+        WalletCoinClassDispatcher,
+        depends=[bitcointx.core.CoreBitcoinClassDispatcher]
+    ):
+        ...
+else:
+    class WalletCoinClassDispatcher(ClassMappingDispatcher):
+        ...
+    WalletCoinClassDispatcher.init_subclass(
+        'wallet',
+        [bitcointx.core.CoreCoinClassDispatcher]
+    )
+
+    class WalletBitcoinClassDispatcher(WalletCoinClassDispatcher):
+        ...
+
+    WalletBitcoinClassDispatcher.init_subclass(
+        depends=[bitcointx.core.CoreBitcoinClassDispatcher]
+    )
 
 
 class WalletBitcoinTestnetClassDispatcher(WalletBitcoinClassDispatcher):
@@ -54,6 +71,11 @@ class WalletBitcoinTestnetClassDispatcher(WalletBitcoinClassDispatcher):
 
 class WalletBitcoinRegtestClassDispatcher(WalletBitcoinClassDispatcher):
     ...
+
+
+if sys.version_info < (3, 6):
+    WalletBitcoinRegtestClassDispatcher.init_subclass()
+    WalletBitcoinTestnetClassDispatcher.init_subclass()
 
 
 class WalletCoinClass(metaclass=WalletCoinClassDispatcher):

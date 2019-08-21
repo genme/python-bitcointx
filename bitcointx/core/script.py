@@ -20,6 +20,7 @@ is in bitcointx.core.scripteval
 
 import struct
 import hashlib
+import sys
 from io import BytesIO
 
 import bitcointx.core
@@ -49,8 +50,16 @@ OPCODE_NAMES = {}
 _opcode_instances = []
 
 
-class ScriptCoinClassDispatcher(ClassMappingDispatcher, identity='script'):
-    ...
+if sys.version_info >= (3, 6):
+    class ScriptCoinClassDispatcher(ClassMappingDispatcher, identity='script'):
+        ...
+else:
+    class ScriptCoinClassDispatcher(ClassMappingDispatcher):
+        ...
+
+    ScriptCoinClassDispatcher.init_subclass(
+        identity='script'
+    )
 
 
 class ScriptCoinClass(metaclass=ScriptCoinClassDispatcher):
@@ -59,6 +68,10 @@ class ScriptCoinClass(metaclass=ScriptCoinClassDispatcher):
 
 class ScriptBitcoinClassDispatcher(ScriptCoinClassDispatcher):
     ...
+
+
+if sys.version_info < (3, 6):
+    ScriptBitcoinClassDispatcher.init_subclass()
 
 
 class ScriptBitcoinClass(metaclass=ScriptBitcoinClassDispatcher):

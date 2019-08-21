@@ -171,7 +171,6 @@ class ClassMappingDispatcher(ABCMetaWithBackportedInitSubclass):
     This map is built from the actual superclass-subclass relations between
     the classes, with the help of a few additional flags that control the
     final mapping"""
-
     def __init_subclass__(mcs, identity=None, depends=()):
         """Initialize the dispatcher metaclass.
            Arguments:
@@ -238,6 +237,10 @@ class ClassMappingDispatcher(ABCMetaWithBackportedInitSubclass):
                         combined_depends[i] = ddisp
 
             mcs._class_dispatcher__depends = tuple(combined_depends)
+
+    # ABCMetaWithBackportedInitSubclass does not support hook
+    # in mcs hierarchy
+    init_subclass = classmethod(__init_subclass__)
 
     def __new__(mcs, name, bases, dct, next_dispatch_final=False,
                 variant_of=None):
@@ -342,7 +345,7 @@ class ClassMappingDispatcher(ABCMetaWithBackportedInitSubclass):
                 if next_dispatch_final:
                     raise AssertionError(
                         '{} is marked with next_dispatch_final=True, '
-                        'but {}, also marked with next_dispatch_final=Trye, '
+                        'but {}, also marked with next_dispatch_final=True, '
                         'is mapped to it'.format(bcs.__name__, cls.__name__))
                 if len(target_list) > 0:
                     raise AssertionError(

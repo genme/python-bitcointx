@@ -41,7 +41,10 @@ class ChainParamsMeta(ABCMeta):
     _registered_classes = OrderedDict()
     _common_base_cls = None
 
-    def __new__(cls, cls_name, bases, dct, name=None):
+    def __init__(cls, name, bases, dct, **kwargs):
+        super().__init__(name, bases, dct)
+
+    def __new__(cls, cls_name, bases, dct, network=None):
         """check that the chainparams class uses unique base class
         (no two chain param classes can share a base class).
         if `name=` parameter is specified in the class declaration,
@@ -64,9 +67,9 @@ class ChainParamsMeta(ABCMeta):
                         .format(cls_name, attr_name, checkfn.__name__,
                                 checkarg.__name__))
 
-            if name is not None:
-                cls_instance.NAME = name
-                cls._registered_classes[name] = cls_instance
+            if network is not None:
+                cls_instance.NAME = network
+                cls._registered_classes[network] = cls_instance
         else:
             if cls._common_base_cls:
                 raise TypeError(
@@ -127,17 +130,17 @@ class ChainParamsBase(metaclass=ChainParamsMeta):
         return ' '.join(name_parts)
 
 
-class BitcoinMainnetParams(ChainParamsBase, name='bitcoin'):
+class BitcoinMainnetParams(ChainParamsBase, network='bitcoin'):
     RPC_PORT = 8332
     WALLET_DISPATCHER = bitcointx.wallet.WalletBitcoinClassDispatcher
 
 
-class BitcoinTestnetParams(BitcoinMainnetParams, name='bitcoin/testnet'):
+class BitcoinTestnetParams(BitcoinMainnetParams, network='bitcoin/testnet'):
     RPC_PORT = 18332
     WALLET_DISPATCHER = bitcointx.wallet.WalletBitcoinTestnetClassDispatcher
 
 
-class BitcoinRegtestParams(BitcoinMainnetParams, name='bitcoin/regtest'):
+class BitcoinRegtestParams(BitcoinMainnetParams, network='bitcoin/regtest'):
     RPC_PORT = 18443
     WALLET_DISPATCHER = bitcointx.wallet.WalletBitcoinRegtestClassDispatcher
 
